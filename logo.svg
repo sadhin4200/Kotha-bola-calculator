@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Talking Calculator logo: a calculator with a face, talking">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7aa2ff"/><stop offset="1" stop-color="#4b73d6"/></linearGradient></defs>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<rect x="100" y="96" width="220" height="350" rx="38" fill="#9db4e6"/>
+<rect x="100" y="84" width="220" height="350" rx="38" fill="#ffffff"/>
+<rect x="124" y="110" width="172" height="122" rx="24" fill="#12233f"/>
+<ellipse cx="168.0" cy="154" rx="16" ry="20" fill="#e8fff3"/>
+<circle cx="171.0" cy="158" r="8" fill="#12233f"/>
+<circle cx="174.0" cy="152" r="3" fill="#ffffff"/>
+<ellipse cx="252.0" cy="154" rx="16" ry="20" fill="#e8fff3"/>
+<circle cx="255.0" cy="158" r="8" fill="#12233f"/>
+<circle cx="258.0" cy="152" r="3" fill="#ffffff"/>
+<path d="M176.0 192 Q210.0 236 244.0 192 Z" fill="#e8fff3"/>
+<path d="M194.0 217 Q210.0 202 226.0 217 Q210.0 228 194.0 217 Z" fill="#f2506e"/>
+<rect x="124" y="256" width="37" height="37" rx="11" fill="#b4c4e4"/>
+<rect x="124" y="252" width="37" height="37" rx="11" fill="#dfe8fb"/>
+<rect x="169" y="256" width="37" height="37" rx="11" fill="#b4c4e4"/>
+<rect x="169" y="252" width="37" height="37" rx="11" fill="#dfe8fb"/>
+<rect x="214" y="256" width="37" height="37" rx="11" fill="#b4c4e4"/>
+<rect x="214" y="252" width="37" height="37" rx="11" fill="#dfe8fb"/>
+<rect x="259" y="256" width="37" height="37" rx="11" fill="#c9601f"/>
+<rect x="259" y="252" width="37" height="37" rx="11" fill="#ff8a3d"/>
+<rect x="124" y="301" width="37" height="37" rx="11" fill="#b4c4e4"/>
+<rect x="124" y="297" width="37" height="37" rx="11" fill="#dfe8fb"/>
+<rect x="169" y="301" width="37" height="37" rx="11" fill="#b4c4e4"/>
+<rect x="169" y="297" width="37" height="37" rx="11" fill="#dfe8fb"/>
+<rect x="214" y="301" width="37" height="37" rx="11" fill="#b4c4e4"/>
+<rect x="214" y="297" width="37" height="37" rx="11" fill="#dfe8fb"/>
+<rect x="259" y="301" width="37" height="37" rx="11" fill="#c9601f"/>
+<rect x="259" y="297" width="37" height="37" rx="11" fill="#ff8a3d"/>
+<rect x="124" y="346" width="37" height="37" rx="11" fill="#b4c4e4"/>
+<rect x="124" y="342" width="37" height="37" rx="11" fill="#dfe8fb"/>
+<rect x="169" y="346" width="37" height="37" rx="11" fill="#b4c4e4"/>
+<rect x="169" y="342" width="37" height="37" rx="11" fill="#dfe8fb"/>
+<rect x="214" y="346" width="37" height="37" rx="11" fill="#b4c4e4"/>
+<rect x="214" y="342" width="37" height="37" rx="11" fill="#dfe8fb"/>
+<rect x="259" y="346" width="37" height="37" rx="11" fill="#c9601f"/>
+<rect x="259" y="342" width="37" height="37" rx="11" fill="#ff8a3d"/>
+<rect x="124" y="391" width="37" height="37" rx="11" fill="#b8304b"/>
+<rect x="124" y="387" width="37" height="37" rx="11" fill="#f2506e"/>
+<rect x="169" y="391" width="37" height="37" rx="11" fill="#b4c4e4"/>
+<rect x="169" y="387" width="37" height="37" rx="11" fill="#dfe8fb"/>
+<rect x="214" y="391" width="37" height="37" rx="11" fill="#c9a21a"/>
+<rect x="214" y="387" width="37" height="37" rx="11" fill="#ffd84d"/>
+<rect x="259" y="391" width="37" height="37" rx="11" fill="#1f8f52"/>
+<rect x="259" y="387" width="37" height="37" rx="11" fill="#2fbf71"/>
+<path d="M344 156 Q367.4 182 344 208" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round" opacity="1.0"/>
+<path d="M352 126 Q402.4 182 352 238" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round" opacity="0.8"/>
+<path d="M360 96 Q437.4 182 360 268" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round" opacity="0.6"/>
+</svg>

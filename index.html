@@ -1,0 +1,1306 @@
+<!doctype html><html data-theme="light"><head><link rel="icon" type="image/svg+xml" href="logo.svg"><title>Talking Calculator</title><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Talking Calculator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one phone-sized column. A robot friend and speech bubble on top, a dark number screen, then big chunky 3D buttons. */
+:root {
+  --bg: #e9f1ff;
+  --ink: #1b2a4a;
+  --panel: #ffffff;
+  --screen: #12233f;
+  --screen-ink: #e8fff3;
+  --screen-dim: #8fa6c9;
+  --digit: #ffffff;
+  --digit-edge: #b4c4e4;
+  --digit-ink: #1b2a4a;
+  --op: #ff8a3d;
+  --op-edge: #c9601f;
+  --op-ink: #2a1300;
+  --eq: #2fbf71;
+  --eq-edge: #1f8f52;
+  --eq-ink: #04230f;
+  --clr: #f2506e;
+  --clr-edge: #b8304b;
+  --clr-ink: #ffffff;
+  --soft: #ffd84d;
+  --soft-edge: #c9a21a;
+  --soft-ink: #3a2e00;
+  --bot: #5b8cff;
+  --bot-edge: #3a63cc;
+  --bubble: #ffffff;
+  --line: #c9d6ef;
+  --f-display: "Noto Sans Bengali", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1830;
+    --ink: #e7eeff;
+    --panel: #18264a;
+    --screen: #08101f;
+    --digit: #27396b;
+    --digit-edge: #142047;
+    --digit-ink: #f1f5ff;
+    --bot: #7aa2ff;
+    --bot-edge: #4b73d6;
+    --bubble: #1c2c56;
+    --line: #2b3d70;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1830;
+  --ink: #e7eeff;
+  --panel: #18264a;
+  --screen: #08101f;
+  --digit: #27396b;
+  --digit-edge: #142047;
+  --digit-ink: #f1f5ff;
+  --bot: #7aa2ff;
+  --bot-edge: #4b73d6;
+  --bubble: #1c2c56;
+  --line: #2b3d70;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-display);
+  padding-block: 14px 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+.app { max-width: 400px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.top h1 { margin: 0; font-size: 20px; font-weight: 800; line-height: 1.1; text-wrap: balance; min-width: 0; }
+.tools { display: flex; gap: 8px; align-items: center; }
+.seg { display: flex; background: var(--panel); border: 2px solid var(--line); border-radius: 999px; padding: 2px; }
+.seg button {
+  font: 700 14px/1 var(--f-display); border: 0; background: transparent; color: var(--ink);
+  padding: 7px 12px; border-radius: 999px; cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--bot); color: #fff; }
+.snd {
+  width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--line); background: var(--panel);
+  color: var(--ink); display: grid; place-items: center; cursor: pointer; padding: 0;
+}
+.snd[aria-pressed="false"] { opacity: .55; }
+.snd svg { width: 20px; height: 20px; }
+
+.talk { display: flex; align-items: flex-end; gap: 10px; }
+.bot { flex: none; width: 76px; }
+.bot .head {
+  background: var(--bot); border-radius: 22px 22px 18px 18px; height: 62px; position: relative;
+  box-shadow: 0 5px 0 var(--bot-edge);
+}
+.bot .head::before { /* antenna */
+  content: ""; position: absolute; left: 50%; top: -12px; width: 4px; height: 12px; margin-left: -2px;
+  background: var(--bot-edge); border-radius: 2px;
+}
+.bot .head::after {
+  content: ""; position: absolute; left: 50%; top: -18px; width: 12px; height: 12px; margin-left: -6px;
+  background: var(--soft); border-radius: 50%;
+}
+.eye {
+  position: absolute; top: 15px; width: 14px; height: 16px; background: #fff; border-radius: 50%;
+  animation: blink 4.5s infinite;
+}
+.eye::after { content: ""; position: absolute; width: 7px; height: 7px; background: #12233f; border-radius: 50%; left: 4px; top: 6px; }
+.eye.l { left: 17px; } .eye.r { right: 17px; }
+.mouth {
+  position: absolute; left: 50%; bottom: 10px; width: 26px; height: 8px; margin-left: -13px;
+  background: #12233f; border-radius: 0 0 14px 14px; transform-origin: top center;
+}
+.bot.talking .mouth { animation: yap .28s ease-in-out infinite alternate; }
+@keyframes yap { from { transform: scaleY(.5); } to { transform: scaleY(1.9); } }
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+
+.bubble {
+  flex: 1; min-width: 0; background: var(--bubble); border: 2px solid var(--line); border-radius: 18px 18px 18px 4px;
+  padding: 10px 14px; font-size: 18px; font-weight: 700; line-height: 1.25; min-height: 62px;
+  display: flex; align-items: center; overflow-wrap: anywhere;
+}
+.vsel { width: 100%; font: 600 15px/1.4 var(--f-display); padding: 8px 10px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel); color: var(--ink); }
+.menu { display: flex; flex-direction: column; gap: 8px; background: var(--panel); border: 2px solid var(--line); border-radius: 18px; padding: 8px; }
+.menu button { font: 700 18px/1.4 var(--f-display); text-align: left; padding: 12px 14px; border: 0; border-radius: 12px; background: var(--bubble); color: var(--ink); cursor: pointer; }
+.menu button[aria-current="page"] { background: var(--bot); color: #fff; }
+.lessons { display: flex; flex-direction: column; gap: 12px; }
+.lesson-card { display: block; width: 100%; text-align: left; font: 600 16px/1.6 var(--f-display); background: var(--panel); color: var(--ink); border: 2px solid var(--line); border-radius: 18px; padding: 12px 14px; box-shadow: 0 4px 0 var(--line); cursor: pointer; }
+.lesson-card h2 { margin: 0 0 4px; font-size: 20px; font-weight: 800; line-height: 1.5; }
+.lesson-card p { margin: 0 0 6px; opacity: .85; }
+.lesson-card .ex { font-size: 18px; font-weight: 700; color: var(--bot-edge); }
+.menu-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 2px 8px; border-bottom: 2px solid var(--line); }
+.menu-tools .seg { flex: 1; justify-content: center; }
+.menu-tools .seg button { flex: 1; text-align: center; }
+.menu-tools .snd { flex: none; }
+.menu-tools .seg button { font: 700 15px/1 var(--f-display); padding: 9px 14px; background: transparent; color: var(--ink); text-align: center; }
+.menu-tools .seg button[aria-pressed="true"] { background: var(--bot); color: #fff; }
+.menu-tools .snd { padding: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--panel); font: inherit; text-align: center; }
+.theme-toggle svg { width: 20px; height: 20px; }
+.theme-toggle .ic-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .ic-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .ic-moon { display: block; }
+.dots { min-height: 34px; gap: 4px; }
+.fruit { font-size: 26px; line-height: 1; display: inline-block; animation: pop .3s ease-out both; }
+.fruit.small { font-size: 18px; }
+.fruit.grp-end { margin-right: 16px; }
+/* Answer box: keeps its height and eases when the number gets bigger or smaller */
+.screen { min-height: 158px; transition: min-height .3s cubic-bezier(.2, .8, .2, 1); }
+.num { min-height: 60px; transition: font-size .3s cubic-bezier(.2, .8, .2, 1), line-height .3s ease; }
+.num.bump { animation: numBump .22s ease-out; }
+@keyframes numBump {
+  from { transform: scale(.94); opacity: .6; }
+  to   { transform: scale(1); opacity: 1; }
+}
+/* Monkey face instead of the robot */
+.bot .head {
+  background: #b98352; border-radius: 50% 50% 46% 46%; box-shadow: 0 5px 0 #7d5330;
+}
+.bot .head::before, .bot .head::after {
+  content: ""; position: absolute; top: 9px; width: 22px; height: 22px; border-radius: 50%;
+  background: #8e5b34; box-shadow: inset 0 0 0 4px #e7b98a;
+}
+.bot .head::before { left: -9px; top: 9px; }
+.bot .head::after { right: -9px; left: auto; top: 9px; background: #8e5b34; }
+.bot .muzzle {
+  position: absolute; left: 50%; bottom: 4px; width: 38px; height: 24px; margin-left: -19px;
+  background: #f0d3ab; border-radius: 50%;
+}
+.bot .nose {
+  position: absolute; left: 50%; top: 35px; width: 10px; height: 6px; margin-left: -5px;
+  background: #5a3a22; border-radius: 50%;
+}
+.bot .mouth { background: #5a3a22; bottom: 8px; width: 18px; height: 6px; margin-left: -9px; }
+.bot .eye::after { background: #2a1b10; }
+/* Monkey grins and shows teeth when there are more than 5 bananas */
+.bot .mouth { transition: width .3s ease, height .3s ease, margin-left .3s ease, border-radius .3s ease; }
+.bot.grin .mouth {
+  width: 30px; height: 13px; margin-left: -15px; bottom: 7px;
+  border-radius: 0 0 15px 15px; background: #5a3a22;
+  box-shadow: inset 0 3px 0 #ffffff;
+}
+/* Embossed buttons: raised top edge, soft inner shading, pressed in when tapped */
+.k:not(.op):not(.eq):not(.clr):not(.soft) {
+  box-shadow: inset 0 2px 1px rgba(255, 255, 255, .75), inset 0 -3px 4px rgba(20, 30, 60, .12),
+              0 5px 0 var(--digit-edge), 0 9px 16px rgba(30, 50, 100, .16);
+}
+.k.op { box-shadow: inset 0 2px 1px rgba(255, 255, 255, .55), inset 0 -3px 4px rgba(60, 20, 0, .2), 0 5px 0 var(--op-edge), 0 9px 16px rgba(30, 50, 100, .14); }
+.k.eq { box-shadow: inset 0 2px 1px rgba(255, 255, 255, .5), inset 0 -3px 4px rgba(0, 40, 15, .2), 0 5px 0 var(--eq-edge), 0 9px 16px rgba(30, 50, 100, .14); }
+.k.clr { box-shadow: inset 0 2px 1px rgba(255, 255, 255, .5), inset 0 -3px 4px rgba(60, 0, 10, .2), 0 5px 0 var(--clr-edge), 0 9px 16px rgba(30, 50, 100, .14); }
+.k.soft { box-shadow: inset 0 2px 1px rgba(255, 255, 255, .6), inset 0 -3px 4px rgba(60, 40, 0, .18), 0 5px 0 var(--soft-edge), 0 9px 16px rgba(30, 50, 100, .14); }
+.k:not(.op):not(.eq):not(.clr):not(.soft):active, .k:not(.op):not(.eq):not(.clr):not(.soft).down {
+  box-shadow: inset 0 3px 5px rgba(20, 30, 60, .2), 0 1px 0 var(--digit-edge);
+}
+.k.op:active, .k.op.down, .k.eq:active, .k.eq.down, .k.clr:active, .k.clr.down, .k.soft:active, .k.soft.down {
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, .22), 0 1px 0 rgba(0, 0, 0, .15);
+}
+.snd, .seg { box-shadow: inset 0 2px 1px rgba(255, 255, 255, .7), inset 0 -2px 3px rgba(20, 30, 60, .1), 0 4px 10px rgba(30, 50, 100, .12); }
+/* Menu: each page gets an icon and a clean row */
+.menu-wrap .menu > button {
+  display: flex; align-items: center; gap: 12px; padding: 13px 16px; border-radius: 16px;
+  transition: transform .15s ease, background-color .2s ease;
+}
+.menu-wrap .menu > button:active { transform: scale(.98); }
+.menu-wrap .menu > button::before {
+  font-size: 20px; line-height: 1; width: 28px; text-align: center; flex: none;
+}
+#m-calc::before { content: '🧮'; }
+#m-memory::before { content: '🧠'; }
+#m-lesson::before { content: '📚'; }
+#m-practice::before { content: '✏️'; }
+#m-story::before { content: '📖'; }
+.menu-wrap .menu > button[aria-current="page"] { box-shadow: 0 6px 16px rgba(60, 100, 220, .3); }
+/* Home (calculator) page: fit the screen, no scrolling. Keys shrink to fit short phones. */
+html.fit, html.fit body { overflow: hidden; height: 100dvh; min-height: 0; overscroll-behavior: none; }
+html.fit body { padding-block: 10px 12px; }
+html.fit #page-calc { height: 100%; gap: 8px; }
+html.fit #page-calc .top, html.fit #page-calc .talk, html.fit #page-calc .note, html.fit #page-calc .vsel { flex: none; }
+html.fit #page-calc .screen { flex: none; min-height: 0; padding-block: 8px 10px; }
+html.fit #page-calc .num { min-height: 48px; }
+html.fit #page-calc .dots { min-height: 30px; }
+html.fit #page-calc .pad { flex: 1 1 0; min-height: 0; grid-template-rows: repeat(5, minmax(0, 1fr)); gap: 8px; }
+html.fit #page-calc .k { height: 100%; max-height: 64px; align-self: center; }
+/* Small swap button on the sticker: shows that tapping changes the animal */
+.bot { position: relative; }
+.swap-btn {
+  position: absolute; right: -4px; bottom: -6px; width: 20px; height: 20px; padding: 0; z-index: 3;
+  display: grid; place-items: center; cursor: pointer;
+  background: var(--soft); color: var(--soft-ink); border: 1.5px solid #fff; border-radius: 50%;
+  box-shadow: 0 2px 0 var(--soft-edge), 0 4px 8px rgba(30, 50, 100, .2);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.swap-btn svg { width: 11px; height: 11px; transition: transform .35s ease; }
+.swap-btn:active { transform: translateY(2px) scale(.94); box-shadow: 0 1px 0 var(--soft-edge); }
+.swap-btn.spin svg { transform: rotate(180deg); }
+/* Tap the monkey to meet other animals */
+.bot { cursor: pointer; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.bot .face-emoji { display: none; height: 62px; font-size: 56px; line-height: 62px; text-align: center; }
+.bot.alt .head { display: none; }
+.bot.alt .face-emoji { display: block; }
+.bot.alt .face-emoji.pop { animation: facePop .35s cubic-bezier(.34, 1.5, .64, 1); }
+.bot.alt.talking .face-emoji { animation: faceTalk .3s ease-in-out infinite alternate; }
+@keyframes facePop { from { transform: scale(.3) rotate(-12deg); } to { transform: none; } }
+@keyframes faceTalk { from { transform: translateY(0) scale(1); } to { transform: translateY(-4px) scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .bot.alt .face-emoji, .bot.alt.talking .face-emoji { animation: none; } }
+.note { margin: 0; font-size: 13px; font-weight: 500; color: var(--ink); opacity: .8; line-height: 1.3; }
+
+.screen { background: var(--screen); color: var(--screen-ink); border-radius: 22px; padding: 12px 18px 14px; }
+.expr { min-height: 24px; text-align: right; font-size: 18px; color: var(--screen-dim); font-weight: 500; overflow-wrap: anywhere; }
+.num { text-align: right; font-weight: 800; font-size: 56px; line-height: 1.05; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.num.m { font-size: 42px; } .num.s { font-size: 30px; }
+.dots { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; min-height: 14px; margin-top: 6px; }
+.dots i { width: 12px; height: 12px; border-radius: 50%; display: block; animation: pop .25s ease-out both; }
+@keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+
+.pad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.k {
+  font: 800 28px/1 var(--f-display); height: 64px; min-width: 0; border: 0; border-radius: 18px; cursor: pointer;
+  background: var(--digit); color: var(--digit-ink); box-shadow: 0 5px 0 var(--digit-edge);
+  display: grid; place-items: center; padding: 0; touch-action: manipulation; user-select: none;
+  transition: transform .06s, box-shadow .06s;
+}
+.k:active, .k.down { transform: translateY(4px); box-shadow: 0 1px 0 var(--digit-edge); }
+.k.op { background: var(--op); color: var(--op-ink); box-shadow: 0 5px 0 var(--op-edge); }
+.k.op:active, .k.op.down { box-shadow: 0 1px 0 var(--op-edge); }
+.k.eq { background: var(--eq); color: var(--eq-ink); box-shadow: 0 5px 0 var(--eq-edge); }
+.k.eq:active, .k.eq.down { box-shadow: 0 1px 0 var(--eq-edge); }
+.k.clr { background: var(--clr); color: var(--clr-ink); box-shadow: 0 5px 0 var(--clr-edge); }
+.k.clr:active, .k.clr.down { box-shadow: 0 1px 0 var(--clr-edge); }
+.k.soft { background: var(--soft); color: var(--soft-ink); box-shadow: 0 5px 0 var(--soft-edge); }
+.k.soft:active, .k.soft.down { box-shadow: 0 1px 0 var(--soft-edge); }
+.k.wide { grid-column: span 2; }
+.k svg { width: 28px; height: 28px; }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+
+/* Bangla script needs more vertical room for matras (vowel signs) and conjuncts */
+html:lang(bn) .top h1,
+html:lang(bn) .bubble,
+html:lang(bn) .note,
+html:lang(bn) .expr,
+html:lang(bn) .seg button,
+html:lang(bn) .k {
+  line-height: 1.6;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+html:lang(bn) .top h1 { font-size: 22px; }
+html:lang(bn) .bubble { font-size: 19px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .eye, .bot.talking .mouth, .dots i, .fruit, .num.bump { animation: none; }
+  .k { transition: none; }
+}
+</style>
+
+<div class="menu-wrap"><nav id="menu" class="menu" aria-label="Menu" hidden>
+  <div class="menu-tools">
+    <div class="seg" role="group" aria-label="Language">
+          <button id="lang-bn" type="button" aria-pressed="true">বাংলা</button>
+          <button id="lang-en" type="button" aria-pressed="false">English</button>
+        </div>
+    <button id="snd" class="snd" type="button" aria-pressed="true" aria-label="Sound">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        </button>
+  </div>
+  <button type="button" data-page="calc" id="m-calc"></button>
+  <button type="button" data-page="memory" id="m-memory"></button>
+  <button type="button" data-page="lesson" id="m-lesson"></button>
+  <button type="button" data-page="practice" id="m-practice"></button>
+  <button type="button" data-page="story" id="m-story"></button>
+</nav></div>
+
+<div class="app" id="page-calc">
+  <div class="top">
+    <h1 id="title">কথা বলা ক্যালকুলেটর</h1>
+    <div class="tools">
+      <button class="snd theme-toggle" type="button" aria-label="Dark or light">
+<svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+<svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>
+</button>
+      <button class="snd menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+
+  <div class="talk">
+    <div class="bot" id="bot">
+      <div class="head"><span class="muzzle"></span><span class="eye l"></span><span class="eye r"></span><span class="nose"></span><span class="mouth"></span></div>
+      <div class="face-emoji" id="faceEmoji" aria-hidden="true"></div>
+      <button class="swap-btn" id="swapBtn" type="button" aria-label="Change animal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.5L4 8.5"/><path d="M4 4v4.5h4.5"/><path d="M4 13a8 8 0 0 0 14.3 4.5l1.7-2"/><path d="M20 20v-4.5h-4.5"/></svg>
+      </button>
+    </div>
+    <div class="bubble" id="bubble" aria-live="polite"></div>
+  </div>
+  <p class="note" id="note" hidden></p>
+  <select id="voice" class="vsel" aria-label="Voice" hidden></select>
+
+  <div class="screen">
+    <div class="expr" id="expr"></div>
+    <div class="num" id="num">0</div>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+  </div>
+
+  <div class="pad" id="pad">
+    <button class="k clr" data-k="C" type="button" aria-label="Clear">C</button>
+    <button class="k" data-k="B" type="button" aria-label="Backspace">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H9l-6 7 6 7h12z"/><path d="M14 9l4 6M18 9l-4 6"/></svg>
+    </button>
+    <button class="k" data-k="." type="button" aria-label="Decimal point">.</button>
+    <button class="k op" data-k="÷" type="button" aria-label="Divide">÷</button>
+
+    <button class="k" data-k="7" type="button">7</button>
+    <button class="k" data-k="8" type="button">8</button>
+    <button class="k" data-k="9" type="button">9</button>
+    <button class="k op" data-k="×" type="button" aria-label="Multiply">×</button>
+
+    <button class="k" data-k="4" type="button">4</button>
+    <button class="k" data-k="5" type="button">5</button>
+    <button class="k" data-k="6" type="button">6</button>
+    <button class="k op" data-k="−" type="button" aria-label="Minus">−</button>
+
+    <button class="k" data-k="1" type="button">1</button>
+    <button class="k" data-k="2" type="button">2</button>
+    <button class="k" data-k="3" type="button">3</button>
+    <button class="k op" data-k="+" type="button" aria-label="Plus">+</button>
+
+    <button class="k wide" data-k="0" type="button">0</button>
+    <button class="k soft" data-k="R" type="button" aria-label="Say again">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
+    </button>
+    <button class="k eq" data-k="=" type="button" aria-label="Equals">=</button>
+  </div>
+</div>
+
+<div class="app" id="page-practice" hidden>
+  <div class="top">
+    <h1 id="p-title"></h1>
+    <div class="tools">
+      <button class="snd theme-toggle" type="button" aria-label="Dark or light">
+<svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+<svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>
+</button>
+      <button class="snd menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+  <div class="talk">
+    <div class="bubble" id="p-bubble" aria-live="polite"></div>
+  </div>
+  <div class="screen">
+    <div class="expr" id="p-q"></div>
+    <div class="num" id="p-ans">?</div>
+  </div>
+  <p class="note" id="p-score"></p>
+  <select id="p-level" class="vsel" aria-label="Level">
+    <option value="easy"></option>
+    <option value="medium"></option>
+    <option value="hard"></option>
+  </select>
+  <div class="pad" id="ppad">
+    <button class="k" data-k="7" type="button">7</button>
+    <button class="k" data-k="8" type="button">8</button>
+    <button class="k" data-k="9" type="button">9</button>
+    <button class="k clr" data-k="B" type="button" aria-label="Backspace">⌫</button>
+    <button class="k" data-k="4" type="button">4</button>
+    <button class="k" data-k="5" type="button">5</button>
+    <button class="k" data-k="6" type="button">6</button>
+    <button class="k soft" data-k="R" type="button" aria-label="Repeat question">🔊</button>
+    <button class="k" data-k="1" type="button">1</button>
+    <button class="k" data-k="2" type="button">2</button>
+    <button class="k" data-k="3" type="button">3</button>
+    <button class="k op" data-k="N" type="button" aria-label="Next question">›</button>
+    <button class="k wide" data-k="0" type="button">0</button>
+    <button class="k eq wide" data-k="=" type="button" aria-label="Check answer">=</button>
+  </div>
+</div>
+
+<div class="app" id="page-lesson" hidden>
+  <div class="top">
+    <h1 id="l-title"></h1>
+    <div class="tools">
+      <button class="snd theme-toggle" type="button" aria-label="Dark or light">
+<svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>
+<svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>
+</button>
+      <button class="snd menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+  <div class="talk">
+    <div class="bubble" id="l-bubble" aria-live="polite"></div>
+  </div>
+  <div class="lessons" id="lessons"></div>
+</div>
+
+<style id="ios-look">
+/* ---------- iOS-style look: animated background, frosted glass, smooth motion ---------- */
+:root {
+  --glass: rgba(255, 255, 255, .55);
+  --glass-strong: rgba(255, 255, 255, .72);
+  --glass-edge: rgba(255, 255, 255, .75);
+  --glass-shadow: 0 10px 28px rgba(30, 50, 100, .14);
+  --blob-a: #ffffff; --blob-b: #ffffff; --blob-c: #ffffff; --base: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --glass: rgba(26, 42, 80, .92); --glass-strong: rgba(34, 52, 96, .96); --glass-edge: rgba(150, 180, 255, .18);
+    --glass-shadow: 0 10px 28px rgba(0, 0, 0, .4);
+    --blob-a: #2a3f80; --blob-b: #4a2a5e; --blob-c: #1d4a48; --base: #0b1226;
+  }
+}
+:root[data-theme="dark"] {
+  --glass: rgba(26, 42, 80, .92); --glass-strong: rgba(34, 52, 96, .96); --glass-edge: rgba(150, 180, 255, .18);
+  --glass-shadow: 0 10px 28px rgba(0, 0, 0, .4);
+  --blob-a: #2a3f80; --blob-b: #4a2a5e; --blob-c: #1d4a48; --base: #0b1226;
+}
+
+/* Always the light, white look: overrides the phone's dark mode colours */
+:root:not([data-theme="dark"]) {
+  color-scheme: light;
+  --bg: #eef1f5; --base: #eef1f5; --ink: #1b2a4a; --panel: #ffffff; --bubble: #ffffff;
+  --line: #c9d6ef; --digit: #ffffff; --digit-edge: #b4c4e4; --digit-ink: #1b2a4a;
+  --bot: #5b8cff; --bot-edge: #3a63cc;
+  --glass: rgba(255, 255, 255, .6); --glass-strong: rgba(255, 255, 255, .8); --glass-edge: rgba(255, 255, 255, .85);
+  --glass-shadow: 0 10px 28px rgba(30, 50, 100, .12);
+  --blob-a: #eef1f5; --blob-b: #eef1f5; --blob-c: #eef1f5;
+  --menu-bg: transparent; --caret-bg: transparent;
+}
+html { background: var(--base); }
+body { background: transparent; position: relative; min-height: 100vh; }
+body::before {
+  content: ""; position: fixed; inset: -25%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 22%, var(--blob-a) 0, transparent 42%),
+    radial-gradient(circle at 82% 30%, var(--blob-b) 0, transparent 40%),
+    radial-gradient(circle at 50% 88%, var(--blob-c) 0, transparent 46%),
+    var(--base);
+}
+@keyframes drift {
+  from { transform: translate3d(-3%, -2%, 0) scale(1); }
+  to   { transform: translate3d(3%, 3%, 0) scale(1.06); }
+}
+
+/* Frosted panels */
+.bubble, .screen, .lesson-card, .vsel, .seg, .snd, .menu {
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-edge);
+}
+.bubble { border-radius: 22px 22px 22px 6px; }
+.screen {
+  background: rgba(18, 35, 63, .72);
+  border-radius: 26px;
+  box-shadow: 0 12px 30px rgba(10, 20, 45, .28), inset 0 1px 0 rgba(255, 255, 255, .12);
+}
+.menu { border-radius: 24px; }
+.lesson-card { border-radius: 22px; box-shadow: var(--glass-shadow); transition: transform .18s ease, box-shadow .18s ease; }
+.lesson-card:active { transform: scale(.98); }
+.seg { border-radius: 999px; }
+.snd { border-radius: 50%; }
+
+/* Keys: plain number keys become frosted glass, coloured keys get a glossy highlight */
+.k:not(.op):not(.eq):not(.clr):not(.soft) {
+  background: var(--glass-strong);
+  box-shadow: 0 6px 16px rgba(30, 50, 100, .16), inset 0 1px 0 var(--glass-edge);
+  border: 1px solid var(--glass-edge);
+}
+.k.op, .k.eq, .k.clr, .k.soft {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 55%);
+}
+.k { border-radius: 20px; transition: transform .12s ease, box-shadow .12s ease, background-color .2s ease; }
+.k:active { transform: translateY(3px) scale(.97); }
+
+/* Floating, see-through menu over the page */
+:root { --menu-bg: transparent; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --menu-bg: transparent; }
+}
+:root[data-theme="dark"] { --menu-bg: transparent; }
+.menu-wrap {
+  position: fixed; top: calc(env(safe-area-inset-top, 0px) + 64px); left: 0; right: 0; z-index: 50;
+  padding: 0 16px; pointer-events: none;
+}
+.menu-wrap .menu {
+  max-width: 400px; margin: 0 auto; pointer-events: auto;
+  background: var(--menu-bg);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 16px 40px rgba(20, 30, 60, .22), inset 0 1px 0 var(--glass-edge);
+  border-radius: 24px; padding: 10px;
+}
+.menu-wrap .menu > button { background: rgba(255, 255, 255, .08); border: 1px solid var(--glass-edge); }
+/* Menu grows out of the ☰ button, then its items pop in one by one */
+/* Menu grows out of the ☰ corner, like the first version */
+.menu-wrap .menu {
+  transform-origin: top right; opacity: 0; transform: scale(.2);
+  transition: opacity .2s ease, transform .3s cubic-bezier(.34, 1.4, .64, 1);
+}
+.menu-wrap .menu.show { opacity: 1; transform: none; }
+.menu-wrap .menu > * { opacity: 0; transform: translateY(-8px); transition: opacity .18s ease, transform .22s ease; }
+.menu-wrap .menu.show > * { opacity: 1; transform: none; }
+.menu-wrap .menu.show > :nth-child(2) { transition-delay: .07s; }
+.menu-wrap .menu.show > :nth-child(3) { transition-delay: .12s; }
+.menu-wrap .menu.show > :nth-child(4) { transition-delay: .17s; }
+.menu-wrap .menu.show > :nth-child(5) { transition-delay: .22s; }
+
+/* Little pointer on top of the menu, aligned under the ☰ button */
+:root { --caret-bg: transparent; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --caret-bg: transparent; }
+}
+:root[data-theme="dark"] { --caret-bg: transparent; }
+.menu-wrap .menu { position: relative; }
+.menu-wrap .menu::before {
+  content: ""; position: absolute; top: -9px; right: 13px; width: 18px; height: 18px;
+  background: var(--caret-bg);
+  border-top: 1px solid var(--glass-edge); border-left: 1px solid var(--glass-edge);
+  border-radius: 4px; transform: rotate(45deg);
+  box-shadow: -2px -2px 6px rgba(20, 30, 60, .08);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+.menu-wrap .menu > button[aria-current="page"] { background: var(--bot); }
+
+/* Page and menu entrance animations */
+#page-calc:not([hidden]), #page-practice:not([hidden]), #page-lesson:not([hidden]) {
+  animation: pageIn .38s cubic-bezier(.2, .8, .2, 1);
+}
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(-8px) scale(.95); }
+  to   { opacity: 1; transform: none; }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  body::before, #page-calc, #page-practice, #page-lesson { animation: none !important; }
+  .menu-wrap .menu, .menu-wrap .menu > * { transition: none !important; }
+}
+</style>
+
+<div class="app" id="page-story" hidden>
+  <div class="top">
+    <h1 id="s-title"></h1>
+    <div class="tools">
+      <button class="snd theme-toggle" type="button" aria-label="Dark or light"><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></button>
+      <button class="snd menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+  <div class="talk">
+    <div class="bubble" id="s-bubble" aria-live="polite" style="font-size:17px;line-height:1.5"></div>
+  </div>
+  <div class="screen">
+    <div class="expr" id="s-q"></div>
+    <div class="num" id="s-ans">?</div>
+  </div>
+  <p class="note" id="s-score"></p>
+  <div class="pad" id="spad">
+    <button class="k" data-k="7" type="button">7</button>
+    <button class="k" data-k="8" type="button">8</button>
+    <button class="k" data-k="9" type="button">9</button>
+    <button class="k clr" data-k="B" type="button" aria-label="Backspace">⌫</button>
+    <button class="k" data-k="4" type="button">4</button>
+    <button class="k" data-k="5" type="button">5</button>
+    <button class="k" data-k="6" type="button">6</button>
+    <button class="k soft" data-k="R" type="button" aria-label="Read again">🔊</button>
+    <button class="k" data-k="1" type="button">1</button>
+    <button class="k" data-k="2" type="button">2</button>
+    <button class="k" data-k="3" type="button">3</button>
+    <button class="k op" data-k="N" type="button" aria-label="Next story">›</button>
+    <button class="k wide" data-k="0" type="button">0</button>
+    <button class="k eq wide" data-k="=" type="button" aria-label="Check answer">=</button>
+  </div>
+</div>
+
+<div class="app" id="page-memory" hidden>
+  <div class="top">
+    <h1 id="m-title"></h1>
+    <div class="tools">
+      <button class="snd theme-toggle" type="button" aria-label="Dark or light"><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg></button>
+      <button class="snd menu-btn" type="button" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+  <div class="talk">
+    <div class="bubble" id="m-bubble" aria-live="polite"></div>
+  </div>
+  <div class="lessons" id="memlist"></div>
+</div>
+
+<script>
+(function () {
+  var T = {
+    bn: {
+      title: 'কথা বলা ক্যালকুলেটর',
+      ops: { '+': 'যোগ', '−': 'বিয়োগ', '×': 'গুণ', '÷': 'ভাগ' },
+      eq: 'সমান', point: 'দশমিক', minus: 'মাইনাস', zero: 'শূন্য',
+      hello: 'একটা সংখ্যা চাপো!',
+      divzero: '০ দিয়ে ভাগ করা যায় না। আবার চেষ্টা করো!',
+      big: 'ওরে বাবা, সংখ্যাটা অনেক বড়!',
+      cleared: 'পরিষ্কার! নতুন করে শুরু করো।',
+      novoice: 'এই ডিভাইসে বাংলা কণ্ঠ পাওয়া যায়নি। English চাপলে কথা শুনতে পারবে।',
+      locale: 'bn-BD',
+      calc: 'ক্যালকুলেটর', practice: 'অনুশীলন', right: 'শাবাশ! একদম ঠিক!', wrong: 'ভুল হয়েছে। উত্তর হলো ', ask: 'কত?', score: 'স্কোর', story: 'গল্প', memory: 'মনে রাখো', lesson: 'শিখি', lv1: 'সহজ (১০ পর্যন্ত, + ও −)', lv2: 'মাঝারি (+, −, ×)', lv3: 'কঠিন (সব)'
+    },
+    en: {
+      title: 'Talking Calculator',
+      ops: { '+': 'plus', '−': 'minus', '×': 'times', '÷': 'divided by' },
+      eq: 'equals', point: 'point', minus: 'minus', zero: 'zero',
+      hello: 'Press a number!',
+      divzero: "You can't divide by zero. Try again!",
+      big: 'Wow, that number is too big!',
+      cleared: 'Cleared! Start fresh.',
+      novoice: 'No English voice was found on this device.',
+      locale: 'en-US',
+      calc: 'Calculator', practice: 'Practice', right: 'Well done! That is correct!', wrong: 'Not quite. The answer is ', ask: 'What is', score: 'Score', story: 'Story', memory: 'Remember', lesson: 'Lesson', lv1: 'Easy (to 10, + and −)', lv2: 'Medium (+, −, ×)', lv3: 'Hard (all)'
+    }
+  };
+  var BN = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  var COLORS = ['#f2506e', '#ff8a3d', '#ffd84d', '#2fbf71', '#5b8cff', '#b06bff'];
+
+  var S = { voice: '', lang: 'bn', sound: true, cur: '0', prev: null, op: null, waiting: false, fresh: false, expr: '', lastSpoken: '', lastShown: '' };
+
+  try {
+    var saved = JSON.parse(localStorage.getItem('talkcalc') || '{}');
+    if (saved.lang === 'en' || saved.lang === 'bn') S.lang = saved.lang;
+    if (saved.sound === false) S.sound = false;
+    if (typeof saved.voice === 'string') S.voice = saved.voice;
+  } catch (e) {}
+  function persist() { try { localStorage.setItem('talkcalc', JSON.stringify({ lang: S.lang, sound: S.sound, voice: S.voice || '' })); } catch (e) {} }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var elNum = $('num'), elExpr = $('expr'), elDots = $('dots'), elBubble = $('bubble'), elBot = $('bot'), elNote = $('note');
+
+  /* ---------- number helpers ---------- */
+  function fmt(r) { return String(parseFloat(r.toFixed(4))); }
+  function calc(a, op, b) {
+    if (op === '+') return a + b;
+    if (op === '−') return a - b;
+    if (op === '×') return a * b;
+    return a / b;
+  }
+  function toSpeech(s) {
+    var t = T[S.lang];
+    var out = s.replace('-', t.minus + ' ').replace('.', ' ' + t.point + ' ');
+    if (S.lang === 'bn') out = out.replace(/[0-9]/g, function (d) { return BN[+d]; });
+    return out.trim();
+  }
+  function toShown(s) {
+    if (S.lang !== 'bn') return s;
+    return s.replace(/[0-9]/g, function (d) { return BN[+d]; });
+  }
+
+  /* ---------- speech ---------- */
+  var voices = [];
+  function loadVoices() {
+    try { voices = window.speechSynthesis ? speechSynthesis.getVoices() : []; } catch (e) { voices = []; }
+    populateVoices();
+    updateNote();
+  }
+  function findVoice(lang) {
+    if (S.voice) for (var k = 0; k < voices.length; k++) if (voices[k].name === S.voice) return voices[k];
+    var loc = T[lang].locale.toLowerCase(), p = lang === 'bn' ? 'bn' : 'en';
+    for (var i = 0; i < voices.length; i++) if ((voices[i].lang || '').toLowerCase() === loc) return voices[i];
+    for (var j = 0; j < voices.length; j++) if ((voices[j].lang || '').toLowerCase().indexOf(p) === 0) return voices[j];
+    return null;
+  }
+  function populateVoices() {
+    var sel = $('voice');
+    if (!sel) return;
+    var p = S.lang === 'bn' ? 'bn' : 'en';
+    var list = voices.filter(function (v) { return (v.lang || '').toLowerCase().indexOf(p) === 0; });
+    if (!list.length) list = voices;
+    sel.textContent = '';
+    list.forEach(function (v) {
+      var o = document.createElement('option');
+      o.value = v.name;
+      o.textContent = v.name + ' (' + v.lang + ')';
+      sel.appendChild(o);
+    });
+    var cur = findVoice(S.lang);
+    if (cur) sel.value = cur.name;
+    sel.hidden = list.length === 0;
+  }
+  function updateNote() {
+    var has = !!window.speechSynthesis;
+    var show = has && voices.length > 0 && !findVoice(S.lang);
+    if (!has) { elNote.textContent = S.lang === 'bn' ? 'এই ব্রাউজারে কথা বলা চলে না, তবে লেখা দেখতে পাবে।' : 'This browser cannot speak, but you can still read the answers.'; elNote.hidden = false; return; }
+    elNote.textContent = T[S.lang].novoice;
+    elNote.hidden = !show;
+  }
+  var talkTimer = null;
+  function setTalking(on) { elBot.classList.toggle('talking', on); }
+  function say(shownText, spokenText, force) {
+    elBubble.textContent = shownText;
+    S.lastShown = shownText; S.lastSpoken = spokenText;
+    if (!S.sound || !window.speechSynthesis) return;
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(spokenText);
+      u.lang = T[S.lang].locale;
+      var v = findVoice(S.lang);
+      if (v) u.voice = v;
+      u.rate = 0.85; u.pitch = 1.0;
+      u.onstart = function () { setTalking(true); };
+      u.onend = u.onerror = function () { setTalking(false); };
+      speechSynthesis.speak(u);
+      clearTimeout(talkTimer);
+      setTalking(true);
+      talkTimer = setTimeout(function () { setTalking(false); }, Math.min(6000, 600 + spokenText.length * 90));
+    } catch (e) { setTalking(false); }
+  }
+
+  /* ---------- rendering ---------- */
+  function render() {
+    elNum.textContent = S.cur;
+    var n = S.cur.length;
+    elNum.className = 'num' + (n > 12 ? ' s' : n > 8 ? ' m' : '');
+    elNum.classList.remove('bump'); void elNum.offsetWidth; elNum.classList.add('bump');
+    elExpr.textContent = S.expr;
+    var v = parseFloat(S.cur);
+    var FRUITS = ['🍎', '🍌', '🍊', '🍇', '🍓', '🍉', '🍑', '🍍', '🍒', '🥭'];
+    var key = (Number.isInteger(v) && v >= 1 && v <= 20) ? v : 0;
+    elBot.classList.toggle('grin', key > 5);
+    // Only rebuild the row when the number actually changes, so it does not re-animate on every press
+    if (elDots.getAttribute('data-n') !== String(key)) {
+      elDots.setAttribute('data-n', String(key));
+      elDots.textContent = '';
+      for (var i = 0; i < key; i++) {
+        var d = document.createElement('span');
+        d.className = 'fruit' + (key > 10 ? ' small' : '');
+        d.textContent = FOODS[animalIdx];
+        // one fruit after another, each one a little later than the last
+        d.style.animationDelay = (i * Math.min(160, Math.floor(1600 / key))) + 'ms';
+        if (key > 10 && (i + 1) % 5 === 0 && i < key - 1) d.classList.add('grp-end');
+        elDots.appendChild(d);
+      }
+    }
+  }
+  function applyLang() {
+    document.documentElement.lang = S.lang === 'bn' ? 'bn' : 'en';
+    $('title').textContent = T[S.lang].title;
+    $('lang-bn').setAttribute('aria-pressed', S.lang === 'bn');
+    $('lang-en').setAttribute('aria-pressed', S.lang === 'en');
+    $('snd').setAttribute('aria-pressed', S.sound);
+    $('snd').setAttribute('aria-label', S.sound ? (S.lang === 'bn' ? 'শব্দ চালু' : 'Sound on') : (S.lang === 'bn' ? 'শব্দ বন্ধ' : 'Sound off'));
+    updateNote();
+    $('swapBtn').setAttribute('aria-label', S.lang === 'bn' ? 'প্রাণী বদলাও' : 'Change animal');
+    $('m-calc').textContent = T[S.lang].calc;
+    $('m-practice').textContent = T[S.lang].practice;
+    $('p-title').textContent = T[S.lang].practice;
+    $('m-lesson').textContent = T[S.lang].lesson;
+    $('l-title').textContent = T[S.lang].lesson;
+    $('m-story').textContent = T[S.lang].story;
+    $('m-memory').textContent = T[S.lang].memory;
+    $('m-title').textContent = T[S.lang].memory;
+    renderMemory();
+    $('s-title').textContent = T[S.lang].story;
+    var lv = $('p-level');
+    if (lv) { lv.options[0].textContent = T[S.lang].lv1; lv.options[1].textContent = T[S.lang].lv2; lv.options[2].textContent = T[S.lang].lv3; }
+    renderLessons();
+  }
+
+  /* ---------- calculator logic ---------- */
+  function digit(d) {
+    if (S.fresh) { S.cur = '0'; S.expr = ''; S.fresh = false; }
+    if (S.waiting) { S.cur = '0'; S.waiting = false; }
+    if (d === '.') {
+      if (S.cur.indexOf('.') >= 0) return;
+      S.cur += '.';
+      render();
+      say(T[S.lang].point, T[S.lang].point);
+      return;
+    }
+    if (S.cur.replace(/[-.]/g, '').length >= 9) return;
+    S.cur = (S.cur === '0') ? d : S.cur + d;
+    render();
+    say(toShown(d), toSpeech(d));
+  }
+  function operator(o) {
+    var t = T[S.lang];
+    if (S.op && !S.waiting) {
+      var a = S.prev, b = parseFloat(S.cur);
+      if (S.op === '÷' && b === 0) return divZero();
+      S.prev = calc(a, S.op, b);
+      S.cur = fmt(S.prev);
+    } else {
+      S.prev = parseFloat(S.cur);
+    }
+    S.op = o; S.waiting = true; S.fresh = false;
+    S.expr = fmt(S.prev) + ' ' + o;
+    render();
+    say(t.ops[o], t.ops[o]);
+  }
+  function divZero() {
+    var t = T[S.lang];
+    S.cur = '0'; S.prev = null; S.op = null; S.waiting = false; S.fresh = false; S.expr = '';
+    render();
+    say(t.divzero, t.divzero);
+  }
+  function equals() {
+    var t = T[S.lang];
+    if (!S.op) { say(toShown(S.cur), toSpeech(S.cur)); return; }
+    var a = S.prev, b = parseFloat(S.cur);
+    if (S.op === '÷' && b === 0) return divZero();
+    var r = calc(a, S.op, b);
+    if (!isFinite(r) || Math.abs(r) >= 1e12) {
+      S.cur = '0'; S.prev = null; S.op = null; S.waiting = false; S.fresh = false; S.expr = '';
+      render(); say(t.big, t.big); return;
+    }
+    var rs = fmt(r);
+    S.expr = fmt(a) + ' ' + S.op + ' ' + fmt(b) + ' =';
+    var shown = toShown(fmt(a)) + ' ' + t.ops[S.op] + ' ' + toShown(fmt(b)) + ' ' + t.eq + ' ' + toShown(rs);
+    var spoken = toSpeech(fmt(a)) + ' ' + t.ops[S.op] + ' ' + toSpeech(fmt(b)) + ' ' + t.eq + ' ' + toSpeech(rs);
+    S.cur = rs; S.prev = null; S.op = null; S.waiting = false; S.fresh = true;
+    render();
+    say(shown, spoken);
+  }
+  function clearAll() {
+    var t = T[S.lang];
+    S.cur = '0'; S.prev = null; S.op = null; S.waiting = false; S.fresh = false; S.expr = '';
+    render();
+    say(t.cleared, t.cleared);
+  }
+  function back() {
+    if (S.fresh || S.waiting) return;
+    S.cur = S.cur.length > 1 && S.cur !== '-0' ? S.cur.slice(0, -1) : '0';
+    if (S.cur === '-') S.cur = '0';
+    render();
+    say(toShown(S.cur), toSpeech(S.cur));
+  }
+  function again() {
+    if (!S.lastSpoken) return;
+    say(S.lastShown, S.lastSpoken);
+  }
+  function press(k) {
+    if (curPage === 'practice') return pPress(k);
+    if (curPage === 'story') return sPress(k);
+    if (k >= '0' && k <= '9' || k === '.') return digit(k);
+    if (k === '+' || k === '−' || k === '×' || k === '÷') return operator(k);
+    if (k === '=') return equals();
+    if (k === 'C') return clearAll();
+    if (k === 'B') return back();
+    if (k === 'R') return again();
+  }
+
+  /* ---------- tap the monkey to change the animal ---------- */
+  var ANIMALS = [null, '🐶', '🐸', '🐠', '🦁', '🐼', '🦄', '🐰', '🐘'];
+  // Each animal's favourite food, same order as ANIMALS (monkey first: banana)
+  var FOODS = ['🍌', '🦴', '🪰', '🪱', '🍖', '🎋', '🌈', '🥕', '🥜'];
+  var animalIdx = 0;
+  elBot.addEventListener('click', function () {
+    animalIdx = (animalIdx + 1) % ANIMALS.length;
+    elDots.setAttribute('data-n', '');
+    render();
+    var face = $('faceEmoji');
+    var a = ANIMALS[animalIdx];
+    $('swapBtn').classList.toggle('spin');
+    elBot.classList.toggle('alt', !!a);
+    face.textContent = a || '';
+    face.classList.remove('pop'); void face.offsetWidth; face.classList.add('pop');
+  });
+
+  /* ---------- events ---------- */
+  $('pad').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-k]');
+    if (b) press(b.getAttribute('data-k'));
+  });
+  $('lang-bn').addEventListener('click', function () { setLang('bn'); });
+  $('lang-en').addEventListener('click', function () { setLang('en'); });
+  function setLang(l) {
+    if (S.lang === l) return;
+    closeMenu();
+    S.lang = l; persist(); applyLang(); populateVoices();
+    var t = T[l];
+    if (curPage === 'practice') {
+      pRender();
+      if (P.q) $('p-bubble').textContent = qShown(P.q);
+    } else if (curPage === 'story') {
+      sRender();
+      if (ST.i >= 0) $('s-bubble').textContent = STORIES[ST.i][S.lang];
+    } else if (curPage === 'memory') {
+      $('m-bubble').textContent = t.memory;
+    } else if (curPage === 'lesson') {
+      $('l-bubble').textContent = t.lesson;
+    } else {
+      render();
+      say(t.hello, t.hello);
+    }
+  }
+  var savedTheme = null;
+  try { savedTheme = localStorage.getItem('talkcalc-theme'); } catch (e) {}
+  document.documentElement.setAttribute('data-theme', savedTheme === 'dark' ? 'dark' : 'light');
+  var themeT = null;
+  function slowThemeSwap(next) {
+    document.documentElement.setAttribute('data-theme', next);
+  }
+  document.querySelectorAll('.theme-toggle').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      try { localStorage.setItem('talkcalc-theme', next); } catch (e) {}
+      slowThemeSwap(next);
+    });
+  });
+  $('voice').addEventListener('change', function () {
+    S.voice = this.value; persist();
+    say(T[S.lang].hello, T[S.lang].hello);
+  });
+  $('snd').addEventListener('click', function () {
+    S.sound = !S.sound; persist(); applyLang();
+    if (!S.sound) { try { speechSynthesis.cancel(); } catch (e) {} setTalking(false); }
+    else say(S.lastShown || T[S.lang].hello, S.lastSpoken || T[S.lang].hello);
+  });
+
+  var KEYMAP = { '*': '×', 'x': '×', 'X': '×', '/': '÷', '-': '−', '+': '+', 'Enter': '=', '=': '=', 'Backspace': 'B', 'Escape': 'C', 'c': 'C', 'C': 'C', '.': '.', ',': '.' };
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var k = KEYMAP[e.key] || ((e.key >= '0' && e.key <= '9' && e.key.length === 1) ? e.key : null);
+    if (!k) return;
+    e.preventDefault();
+    var btn = document.querySelector('button[data-k="' + k + '"]');
+    if (btn) { btn.classList.add('down'); setTimeout(function () { btn.classList.remove('down'); }, 120); }
+    press(k);
+  });
+
+
+  /* ---------- pages & menu ---------- */
+  var curPage = 'calc';
+  document.documentElement.classList.add('fit');
+  var menuEl = $('menu');
+  var menuTimer = null;
+  function setMenu(open) {
+    clearTimeout(menuTimer);
+    if (open) {
+      menuEl.hidden = false;
+      void menuEl.offsetWidth;
+      menuEl.classList.add('show');
+    } else {
+      menuEl.classList.remove('show');
+      menuTimer = setTimeout(function () { menuEl.hidden = true; }, 300);
+    }
+    document.querySelectorAll('.menu-btn').forEach(function (b) { b.setAttribute('aria-expanded', String(open)); });
+  }
+  function closeMenu() { setMenu(false); }
+  function toggleMenu() { setMenu(!menuEl.classList.contains('show')); }
+  document.addEventListener('click', function (e) {
+    if (menuEl.classList.contains('show') && !e.target.closest('.menu-wrap') && !e.target.closest('.menu-btn')) closeMenu();
+  });
+  document.querySelectorAll('.menu-btn').forEach(function (b) { b.addEventListener('click', toggleMenu); });
+  document.querySelectorAll('#menu button[data-page]').forEach(function (b) {
+    b.addEventListener('click', function () { showPage(b.getAttribute('data-page')); });
+  });
+  function showPage(name) {
+    curPage = name;
+    document.documentElement.classList.toggle('fit', name === 'calc');
+    window.scrollTo(0, 0);
+    closeMenu();
+    $('page-calc').hidden = name !== 'calc';
+    $('page-practice').hidden = name !== 'practice';
+    $('m-calc').setAttribute('aria-current', name === 'calc' ? 'page' : 'false');
+    $('m-practice').setAttribute('aria-current', name === 'practice' ? 'page' : 'false');
+    $('page-lesson').hidden = name !== 'lesson';
+    $('page-story').hidden = name !== 'story';
+    $('page-memory').hidden = name !== 'memory';
+    $('m-memory').setAttribute('aria-current', name === 'memory' ? 'page' : 'false');
+    if (name === 'memory') renderMemory();
+    $('m-story').setAttribute('aria-current', name === 'story' ? 'page' : 'false');
+    if (name === 'story') { if (ST.i < 0) sNext(); else sRender(); }
+    $('m-lesson').setAttribute('aria-current', name === 'lesson' ? 'page' : 'false');
+    if (name === 'lesson') renderLessons();
+    if (name === 'practice') { if (!P.q) newQ(); else pRender(); }
+    else { clearTimeout(P.timer); clearTimeout(ST.timer); P.busy = false; ST.busy = false; try { speechSynthesis.cancel(); } catch (e) {} }
+  }
+
+  /* ---------- practice ---------- */
+  var P = { q: null, ans: '', correct: 0, total: 0, busy: false, timer: null, level: 'easy' };
+  function rnd(lo, hi) { return lo + Math.floor(Math.random() * (hi - lo + 1)); }
+  function makeQ() {
+    var ops, a, b, r, op;
+    if (P.level === 'easy') {
+      ops = ['+', '−']; op = ops[rnd(0, 1)];
+      if (op === '+') { a = rnd(1, 10); b = rnd(1, 10 - a + 1); r = a + b; }
+      else { a = rnd(1, 10); b = rnd(0, a); r = a - b; }
+    } else if (P.level === 'medium') {
+      ops = ['+', '−', '×']; op = ops[rnd(0, 2)];
+      if (op === '+') { a = rnd(1, 30); b = rnd(1, 30); r = a + b; }
+      else if (op === '−') { a = rnd(1, 30); b = rnd(0, a); r = a - b; }
+      else { a = rnd(1, 5); b = rnd(1, 5); r = a * b; }
+    } else {
+      ops = ['+', '−', '×', '÷']; op = ops[rnd(0, 3)];
+      if (op === '+') { a = rnd(1, 50); b = rnd(1, 50); r = a + b; }
+      else if (op === '−') { a = rnd(1, 50); b = rnd(0, a); r = a - b; }
+      else if (op === '×') { a = rnd(1, 12); b = rnd(1, 12); r = a * b; }
+      else { b = rnd(1, 9); r = rnd(1, 12); a = b * r; }
+    }
+    return { a: a, b: b, op: op, r: r };
+  }
+  function qShown(q) { return toShown(String(q.a)) + ' ' + q.op + ' ' + toShown(String(q.b)) + ' = ?'; }
+  function qSpeech(q) {
+    var t = T[S.lang];
+    if (S.lang === 'bn') return toSpeech(String(q.a)) + ' ' + t.ops[q.op] + ' ' + toSpeech(String(q.b)) + ' ' + t.ask;
+    return t.ask + ' ' + toSpeech(String(q.a)) + ' ' + t.ops[q.op] + ' ' + toSpeech(String(q.b)) + '?';
+  }
+  function pSay(shown, spoken) {
+    $('p-bubble').textContent = shown;
+    if (!S.sound || !window.speechSynthesis) return;
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(spoken);
+      u.lang = T[S.lang].locale;
+      var v = findVoice(S.lang);
+      if (v) u.voice = v;
+      u.rate = 0.85; u.pitch = 1.0;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function pRender() {
+    var t = T[S.lang];
+    $('p-q').textContent = P.q ? qShown(P.q) : '';
+    $('p-ans').textContent = P.ans === '' ? '?' : toShown(P.ans);
+    $('p-score').textContent = t.score + ': ' + toShown(String(P.correct)) + ' / ' + toShown(String(P.total));
+  }
+  function newQ() {
+    clearTimeout(P.timer);
+    P.q = makeQ(); P.ans = ''; P.busy = false;
+    pRender();
+    pSay(qShown(P.q), qSpeech(P.q));
+  }
+  function pDigit(d) {
+    if (P.busy) return;
+    if (P.ans === '0') P.ans = d;
+    else if (P.ans.length < 6) P.ans += d;
+    else return;
+    pRender();
+    pSay(toShown(d), toSpeech(d));
+  }
+  function pBack() { if (P.busy) return; P.ans = P.ans.slice(0, -1); pRender(); }
+  function pRepeat() { if (P.q) pSay(qShown(P.q), qSpeech(P.q)); }
+  function pNext() { newQ(); }
+  function pCheck() {
+    if (P.busy || P.ans === '' || !P.q) return;
+    var t = T[S.lang];
+    P.busy = true; P.total++;
+    var ok = parseInt(P.ans, 10) === P.q.r;
+    if (ok) P.correct++;
+    var shown = ok ? t.right : t.wrong + toShown(String(P.q.r));
+    var spoken = ok ? t.right : t.wrong + toSpeech(String(P.q.r));
+    pRender();
+    pSay(shown, spoken);
+    P.timer = setTimeout(newQ, ok ? 1800 : 3000);
+  }
+  function pPress(k) {
+    if (k >= '0' && k <= '9') return pDigit(k);
+    if (k === 'B') return pBack();
+    if (k === '=') return pCheck();
+    if (k === 'R') return pRepeat();
+    if (k === 'N') return pNext();
+  }
+  $('ppad').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-k]');
+    if (b) press(b.getAttribute('data-k'));
+  });
+
+  /* ---------- lessons ---------- */
+  var LESSONS = [
+    { op: '+', name: { bn: 'যোগ (+)', en: 'Plus (+)' }, desc: { bn: 'দুটো সংখ্যা একসাথে রাখা হয়।', en: 'We put two numbers together.' }, ex: [[2, 3, 5], [4, 4, 8], [10, 5, 15]] },
+    { op: '−', name: { bn: 'বিয়োগ (−)', en: 'Minus (−)' }, desc: { bn: 'একটা সংখ্যা থেকে আরেকটা সংখ্যা কমানো হয়।', en: 'We take one number away from another.' }, ex: [[9, 4, 5], [7, 2, 5], [10, 6, 4]] },
+    { op: '×', name: { bn: 'গুণ (×)', en: 'Times (×)' }, desc: { bn: 'একই সংখ্যা বারবার যোগ করা।', en: 'Adding the same number again and again.' }, ex: [[3, 4, 12], [5, 2, 10], [6, 5, 30]] },
+    { op: '÷', name: { bn: 'ভাগ (÷)', en: 'Divide (÷)' }, desc: { bn: 'সমান ভাগে ভাগ করা।', en: 'Sharing into equal parts.' }, ex: [[12, 3, 4], [20, 4, 5], [15, 5, 3]] }
+  ];
+  function lessonLines(L) {
+    return L.ex.map(function (e) { return toShown(String(e[0])) + ' ' + L.op + ' ' + toShown(String(e[1])) + ' = ' + toShown(String(e[2])); });
+  }
+  function lessonSpeech(L) {
+    var t = T[S.lang];
+    var parts = [L.desc[S.lang]];
+    L.ex.forEach(function (e) {
+      parts.push(toSpeech(String(e[0])) + ' ' + t.ops[L.op] + ' ' + toSpeech(String(e[1])) + ' ' + t.eq + ' ' + toSpeech(String(e[2])));
+    });
+    return parts.join('. ');
+  }
+  function lSay(shown, spoken) {
+    $('l-bubble').textContent = shown;
+    if (!S.sound || !window.speechSynthesis) return;
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(spoken);
+      u.lang = T[S.lang].locale;
+      var v = findVoice(S.lang);
+      if (v) u.voice = v;
+      u.rate = 0.8; u.pitch = 1.0;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function renderLessons() {
+    var box = $('lessons');
+    if (!box) return;
+    box.textContent = '';
+    LESSONS.forEach(function (L) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lesson-card';
+      var h = document.createElement('h2');
+      h.textContent = L.name[S.lang];
+      var p = document.createElement('p');
+      p.textContent = L.desc[S.lang];
+      btn.appendChild(h);
+      btn.appendChild(p);
+      lessonLines(L).forEach(function (line) {
+        var d = document.createElement('div');
+        d.className = 'ex';
+        d.textContent = line;
+        btn.appendChild(d);
+      });
+      btn.addEventListener('click', function () {
+        lSay(L.name[S.lang] + ' — ' + L.desc[S.lang], lessonSpeech(L));
+      });
+      box.appendChild(btn);
+    });
+  }
+  $('p-level').addEventListener('change', function () {
+    P.level = this.value; P.correct = 0; P.total = 0; newQ();
+  });
+
+  /* ---------- story ---------- */
+  var STORIES = [
+    { bn: 'আমি একটা আপেল কিনলাম। আমার মামা আমাকে আরেকটা আপেল দিলো। আমার কাছে এখন কয়টা আপেল?', en: 'I bought one apple. My uncle gave me one more apple. How many apples do I have now?', a: 2 },
+    { bn: 'রিয়ার কাছে ৫টা কলা ছিল। সে দুটো কলা খেয়ে ফেলল। রিয়ার কাছে এখন কয়টা কলা আছে?', en: 'Ria had 5 bananas. She ate 2 of them. How many bananas does Ria have now?', a: 3 },
+    { bn: 'বাগানে ৪টা ফুল ফুটেছিল। আরও ৩টা ফুল ফুটল। এখন মোট কয়টা ফুল?', en: 'Four flowers bloomed in the garden. Three more flowers bloomed. How many flowers are there in total?', a: 7 },
+    { bn: 'ঝুড়িতে ৬টা আম ছিল। মা ২টা আম নিয়ে গেলেন। ঝুড়িতে এখন কয়টা আম বাকি?', en: 'There were 6 mangoes in the basket. Mom took 2 mangoes. How many mangoes are left?', a: 4 },
+    { bn: 'একটা দোকানে ৯টা বিস্কুট ছিল। ৩টা বিস্কুট বিক্রি হলো। কয়টা বিস্কুট বাকি?', en: 'The shop had 9 biscuits. 3 biscuits were sold. How many biscuits are left?', a: 6 },
+    { bn: 'তিন বন্ধুর প্রত্যেকের কাছে ২টি করে বল আছে। তাদের মোট কয়টি বল?', en: 'Each of three friends has 2 balls. How many balls do they have in total?', a: 6 },
+    { bn: 'পাখির বাসায় ৫টা ডিম ছিল। আরও ৫টা ডিম এলো। এখন মোট কয়টা ডিম?', en: 'The bird nest had 5 eggs. 5 more eggs came. How many eggs are there now?', a: 10 }
+  ];
+  var ST = { i: -1, ans: '', busy: false, timer: null, correct: 0, total: 0 };
+  function sRender() {
+    $('s-q').textContent = ST.i >= 0 ? '' : '';
+    $('s-ans').textContent = ST.ans === '' ? '?' : toShown(ST.ans);
+    $('s-score').textContent = T[S.lang].score + ': ' + toShown(String(ST.correct)) + ' / ' + toShown(String(ST.total));
+  }
+  function sSay(shown, spoken) {
+    $('s-bubble').textContent = shown;
+    if (!S.sound || !window.speechSynthesis) return;
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(spoken);
+      u.lang = T[S.lang].locale;
+      var v = findVoice(S.lang);
+      if (v) u.voice = v;
+      u.rate = 0.85; u.pitch = 1.0;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function sNext() {
+    clearTimeout(ST.timer);
+    // Random order: shuffle all stories, show each once, then reshuffle (never the same one twice in a row)
+    if (!ST.bag || !ST.bag.length) {
+      ST.bag = STORIES.map(function (_, k) { return k; });
+      for (var k = ST.bag.length - 1; k > 0; k--) {
+        var j = Math.floor(Math.random() * (k + 1)), tmp = ST.bag[k]; ST.bag[k] = ST.bag[j]; ST.bag[j] = tmp;
+      }
+      if (ST.bag.length > 1 && ST.bag[ST.bag.length - 1] === ST.i) { ST.bag.unshift(ST.bag.pop()); }
+    }
+    ST.i = ST.bag.pop();
+    ST.ans = ''; ST.busy = false;
+    sRender();
+    sSay(STORIES[ST.i][S.lang], STORIES[ST.i][S.lang]);
+  }
+  function sRepeat() { if (ST.i >= 0) sSay(STORIES[ST.i][S.lang], STORIES[ST.i][S.lang]); }
+  function sDigit(d) {
+    if (ST.busy) return;
+    if (ST.ans === '0') ST.ans = d;
+    else if (ST.ans.length < 4) ST.ans += d;
+    else return;
+    sRender();
+    sSay(toShown(d), toSpeech(d));
+  }
+  function sBack() { if (ST.busy) return; ST.ans = ST.ans.slice(0, -1); sRender(); }
+  function sCheck() {
+    if (ST.busy || ST.ans === '' || ST.i < 0) return;
+    var t = T[S.lang], st = STORIES[ST.i];
+    ST.busy = true; ST.total++;
+    var ok = parseInt(ST.ans, 10) === st.a;
+    if (ok) ST.correct++;
+    var shown = ok ? t.right : t.wrong + toShown(String(st.a));
+    var spoken = ok ? t.right : t.wrong + toSpeech(String(st.a));
+    sRender();
+    sSay(shown, spoken);
+    ST.timer = setTimeout(sNext, ok ? 2400 : 3400);
+  }
+  function sPress(k) {
+    if (k >= '0' && k <= '9') return sDigit(k);
+    if (k === 'B') return sBack();
+    if (k === '=') return sCheck();
+    if (k === 'R') return sRepeat();
+    if (k === 'N') return sNext();
+  }
+  $('spad').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-k]');
+    if (b) press(b.getAttribute('data-k'));
+  });
+
+  /* ---------- remember the numbers 1-9 ---------- */
+  var MEM = [
+    { n: 1, e: '✏️', eBn: '☝️', bn: 'একটা আঙুল তোলো। এই তো এক!', en: 'One looks like a straight pencil.' },
+    { n: 2, e: '🦢', eBn: '✌️', bn: 'দুটো আঙুল তোলো। এই তো দুই!', en: 'Two looks like a swan with a curved neck.' },
+    { n: 3, e: '🌊', eBn: '🤟', bn: 'তিনটা আঙুল তোলো। এই তো তিন!', en: 'Three looks like two waves stacked.' },
+    { n: 4, e: '🪑', eBn: '✌️✌️', bn: 'দুই হাতে দুটো করে আঙুল তোলো। এই তো চার!', en: 'Four looks like a chair you can sit on.' },
+    { n: 5, e: '✋', eBn: '🖐️', bn: 'এক হাতের সব আঙুল তোলো। এই তো পাঁচ!', en: 'Five is a hand with five fingers.' },
+    { n: 6, e: '🐍', eBn: '🖐️☝️', bn: 'এক হাতে পাঁচ আঙুল, আরেক হাতে এক আঙুল। মোট ছয়!', en: 'Six looks like a snake curled up.' },
+    { n: 7, e: '🚩', eBn: '🖐️✌️', bn: 'এক হাতে পাঁচ আঙুল, আরেক হাতে দুই আঙুল। মোট সাত!', en: 'Seven looks like a flag on a pole.' },
+    { n: 8, e: '⛄', eBn: '🖐️🤟', bn: 'এক হাতে পাঁচ আঙুল, আরেক হাতে তিন আঙুল। মোট আট!', en: 'Eight looks like a snowman, two balls stacked.' },
+    { n: 9, e: '🍭', eBn: '🖐️🖖', bn: 'এক হাতে পাঁচ আঙুল, আরেক হাতে চার আঙুল। মোট নয়!', en: 'Nine looks like a lollipop, a round top and a stick.' }
+  ];
+  function renderMemory() {
+    var box = $('memlist');
+    if (!box) return;
+    box.textContent = '';
+    MEM.forEach(function (m) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'lesson-card';
+      var h = document.createElement('h2');
+      h.textContent = toShown(String(m.n)) + '  ' + (S.lang === 'bn' && m.eBn ? m.eBn : m.e);
+      var p = document.createElement('p');
+      p.textContent = m[S.lang];
+      btn.appendChild(h);
+      btn.appendChild(p);
+      btn.addEventListener('click', function () {
+        var shown = toShown(String(m.n)) + ' — ' + m[S.lang];
+        var spoken = toSpeech(String(m.n)) + '. ' + m[S.lang];
+        $('m-bubble').textContent = shown;
+        if (!S.sound || !window.speechSynthesis) return;
+        try {
+          speechSynthesis.cancel();
+          var u = new SpeechSynthesisUtterance(spoken);
+          u.lang = T[S.lang].locale;
+          var v = findVoice(S.lang);
+          if (v) u.voice = v;
+          u.rate = 0.8; u.pitch = 1.0;
+          speechSynthesis.speak(u);
+        } catch (e) {}
+      });
+      box.appendChild(btn);
+    });
+  }
+
+  /* ---------- start: a worked example so the first screen shows what it does ---------- */
+  if (window.speechSynthesis) {
+    loadVoices();
+    try { speechSynthesis.addEventListener('voiceschanged', loadVoices); } catch (e) { speechSynthesis.onvoiceschanged = loadVoices; }
+  }
+  applyLang();
+  S.cur = '0'; S.fresh = false; S.expr = '';
+  render();
+  elBubble.textContent = T[S.lang].hello;
+  S.lastShown = T[S.lang].hello;
+  S.lastSpoken = T[S.lang].hello;
+})();
+</script>
+
+</body></html>
